@@ -1,0 +1,33 @@
+#Se importan las librerias necesarias 
+from pyspark.sql import SparkSession, functions as F 
+# Inicio de sesión de Spark 
+spark = SparkSession.builder.appName('Tarea3').getOrCreate() 
+spark.conf.set("spark.sql.debug.maxToStringFields", 100)
+# Se define la ruta del archivo .csv en HDFS 
+file_path = 'hdfs://localhost:9000/Tarea3/rows.csv' 
+# Se lee el archivo .csv 
+df = spark.read.format('csv').option('header','true').option('inferSchema', 'true').load(file_path) 
+#imprimimos el esquema 
+df.printSchema() 
+# Muestra las primeras filas del DataFrame 
+df.show() 
+# Estadisticas básicas 
+df.summary().show()
+# Consulta: Filtrar por valor asignado mayor a 25000 y seleccionar columnas relevantes
+print("Subsidios con valor mayor a 5000\n")
+subsidios_filtrados = df.filter(F.col('Valor Asignado') > 25000).select(
+    'Valor Asignado', 'Año de Asignación', 'Departamento', 'Municipio')
+subsidios_filtrados.show()
+# Ordenar filas por los valores en la columna "Valor Asignado" en orden descendente
+print("Subsidios ordenados de mayor a menor por valor asignado\n")
+subsidios_ordenados = df.sort(F.col("Valor Asignado").desc())
+subsidios_ordenados.show()
+# Suma total del valor asignado por departamento
+print("Suma total de valor asignado por departamento\n")
+valor_por_departamento = df.groupBy('Departamento').agg(F.sum('Valor Asignado').alias('Total Asignado')).orderBy(F.col('Total Asignado').desc())
+valor_por_departamento.show()
+# Filtrar subsidios asignados a un departamento específico
+departamento_filtro = 'Amazonas'  # Se puede cambiar el valor
+print(f"Subsidios asignados en {departamento_filtro}\n")
+subsidios_departamento = df.filter(F.col('Departamento') == departamento_filtro)
+subsidios_departamento.show()
